@@ -96,6 +96,8 @@ li button.active {
 
 .chatFooter {
   margin-top: 24px;
+  width: 97%;
+  margin-right: 5px;
 }
 
 .inputContainer {

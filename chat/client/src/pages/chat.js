@@ -1,134 +1,101 @@
-import React, { useState, useCallback } from 'react';
-import styles from '../chat.module.css';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import styles from '../chat.module.css';
 
+function ChatApp({ activeChatroom, username }) {
+  const [newMessage, setNewMessage] = useState('');
+  const [chatrooms, setChatrooms] = useState([]);
 
-function ChatApp() {
-  const [inputValue, setInputValue] = useState('');
-  const [chats, setChats] = useState({
-    chat1: {
-      member1: [],
-      member2: [],
-      member3: [],
-    },
-    chat2: {
-      member1: [],
-      member2: [],
-      member3: [],
-    },
-    chat3: {
-      member1: [],
-      member2: [],
-      member3: [],
-    },
-  });
-  const [currentChat, setCurrentChat] = useState('chat1');
-  const [members] = useState(['member1', 'member2', 'member3']);
-  const [availableChats] = useState(['chat1', 'chat2', 'chat3']);
-
-  const handleInput = useCallback((event) => {
-    setInputValue(event.currentTarget.value);
-  }, []);
-
-  const handleSubmit = useCallback((event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!inputValue.trim()) {
+    if (newMessage.trim() === '') {
       return;
     }
+    const timestamp = new Date().toLocaleString();
+    const message = {
+      username: username,
+      message: newMessage,
+      time: timestamp,
+    };
+    try {
+      const response = await axios.post('http://localhost:5000/get/create', message);
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+    }
+    setNewMessage('');
+  };
 
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/get/messages');
+        const messages = response.data;
+        setChatrooms([{ id: activeChatroom, messages }]);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchMessages();
+  }, [activeChatroom]);
 
-    setChats((prevChats) => {
-      const chatId = currentChat;
-      const memberId = 'member1'; // TODO: Change to the ID of the currently logged-in user
-      const newMessage = {
-        text: inputValue,
-        timestamp: new Date().toISOString(),
-      };
-      const updatedChat = {
-        ...prevChats[chatId],
-        [memberId]: [...prevChats[chatId][memberId], newMessage],
-      };
-      return {
-        ...prevChats,
-        [chatId]: updatedChat,
-      };
-    });
-    setInputValue('');
-  }, [currentChat, inputValue]);
-
-  const handleChatChange = useCallback((event) => {
-    setCurrentChat(event.currentTarget.value);
-  }, []);
-
-  const currentChatMembers = chats[currentChat] || {};
 
   return (
     <div className={styles.chatApp}>
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      />
-      <meta name="viewport" content="initial-scale=1, width=device-width" />
       <div className={styles.sidebar}>
         <div className={styles.chats}>
-          <div className={styles.chatHeader}>Chats</div>
+          <h2 className={styles.chatHeader}>Chatrooms</h2>
           <ul>
-            {availableChats.map(chat => (
-              <li key={chat}>
-                <button
-                  className={currentChat === chat ? 'active' : ''}
-                  value={chat}
-                  onClick={handleChatChange}
-                >
-                  {chat}
-                </button>
-              </li>
-            ))}
+            <li>
+              <button className={`${styles.chatButton} ${activeChatroom === 'Teknisk' ? styles.active : ''}`}>Teknisk</button>
+            </li>
+            <li>
+              <button className={`${styles.chatButton} ${activeChatroom === 'Personal' ? styles.active : ''}`}>Personal</button>
+            </li>
+            <li>
+              <button className={`${styles.chatButton} ${activeChatroom === 'Salg' ? styles.active : ''}`}>Salg</button>
+            </li>
           </ul>
         </div>
-  
         <div className={styles.members}>
-          <div className={styles.chatHeader}>Members</div>
+          <h2 className={styles.chatHeader}>Members</h2>
           <ul>
-            {members.map(member => (
-              <li key={member}>{member}</li>
-            ))}
+            <li>John</li>
+            <li>Mary</li>
+            <li>Tom</li>
           </ul>
         </div>
       </div>
       <div className={styles.chatMain}>
-        <div className={styles.chatHeader}>{currentChat}</div>
+        <h2 className={styles.chatHeader}>{activeChatroom} Chatroom</h2>
         <div className={styles.chatBody}>
-          {currentChatMembers[members[0]]?.map((message, index) => (
-            <ChatMessage key={index} message={message.text} timestamp={message.timestamp} />
-          ))}
+          {chatrooms.map((chatroom) =>
+            chatroom.messages.map((message, index) => (
+              <div key={index}>
+                <p>
+                  {message.username}
+                </p>
+                <p><strong>{message.message}</strong></p>
+                <p className={styles.timestamp}>{message.time}</p>
+              </div>
+            ))
+          )}
         </div>
-        <div className={styles.chatFooter}>
-          <form className={styles.inputContainer} onSubmit={handleSubmit}>
+        <form className={styles.chatFooter} onSubmit={handleSubmit}>
+          <div className={styles.inputContainer}>
+            <label htmlFor="newMessage">New message:</label>
             <input
               type="text"
-              value={inputValue}
-              onChange={handleInput}
-              maxLength="500"
+              id="newMessage"
+              value={newMessage}
+              onChange={(event) => setNewMessage(event.target.value)}
             />
-            <button className={styles.sendButton} type="submit">Send</button>
-          </form>
-        </div>
+            <button type="submit">Send</button>
+          </div>
+        </form>
       </div>
     </div>
   );
-  
 }
-
-function ChatMessage({ message, timestamp }) {
-  const formattedTimestamp = new Date(timestamp).toLocaleString();
-  return (
-    <div className={styles.messageContainer}>
-      <div className={styles.messageSent}>{message}</div>
-      <div className={styles.timestamp}>{formattedTimestamp}</div>
-    </div>
-  );
-}
-
 
 export default ChatApp;
