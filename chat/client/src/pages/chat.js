@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import styles from '../chat.module.css';
 
-function ChatApp({ activeChatroom, username }) {
+function ChatApp({ activeChatroom }) {
   const [newMessage, setNewMessage] = useState('');
   const [chatrooms, setChatrooms] = useState([]);
-
+  const username = sessionStorage.getItem("username");
+  const messagesEndRef = useRef()
+  
+  console.log(username)
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (newMessage.trim() === '') {
@@ -17,9 +20,9 @@ function ChatApp({ activeChatroom, username }) {
       message: newMessage,
       time: timestamp,
     };
+    console.log(message)
     try {
-      const response = await axios.post('http://localhost:5000/get/create', message);
-      console.log(response);
+      const response = await axios.post('http://armadillo.pink:25573/get/create', message);
     } catch (error) {
       console.log(error);
     }
@@ -27,17 +30,28 @@ function ChatApp({ activeChatroom, username }) {
   };
 
   useEffect(() => {
+
     const fetchMessages = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/get/messages');
-        const messages = response.data;
+        const response = await axios.get('http://armadillo.pink:25573/get/messages');
+        const messages = response.data.map((message) => ({
+          ...message,
+          time: new Date(message.time).toLocaleString(),
+        }));
         setChatrooms([{ id: activeChatroom, messages }]);
+        messagesEndRef.current.scrollIntoView({ behavior: "instant" });
       } catch (error) {
         console.log(error);
       }
     };
+    
     fetchMessages();
+    const intervalId = setInterval(fetchMessages, 1000)
+    return () => {
+      clearInterval(intervalId);
+    };
   }, [activeChatroom]);
+
 
 
   return (
@@ -71,15 +85,15 @@ function ChatApp({ activeChatroom, username }) {
         <div className={styles.chatBody}>
           {chatrooms.map((chatroom) =>
             chatroom.messages.map((message, index) => (
-              <div key={index}>
+              <div id={"msg"+index} className ={styles.messageList} key={index}>
                 <p>
-                  {message.username}
+                <strong>{message.username}:</strong>
+                <p className={styles.chatstyle}>{message.message}<p>{message.time}</p></p>
                 </p>
-                <p><strong>{message.message}</strong></p>
-                <p className={styles.timestamp}>{message.time}</p>
               </div>
             ))
           )}
+          <div ref={messagesEndRef} />
         </div>
         <form className={styles.chatFooter} onSubmit={handleSubmit}>
           <div className={styles.inputContainer}>

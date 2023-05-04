@@ -2,11 +2,10 @@ const router = require("express").Router();
 const Message = require("./message");
 
 router.post('/create', async (req, res) => {
-    console.log(req.body)
     try{
         const newMessage = new Message({
             message: req.body.message,
-            username: req.body.username,
+            username: req.body.user,
             time: req.body.time,
         });
         const message = await newMessage.save();
@@ -14,13 +13,12 @@ router.post('/create', async (req, res) => {
     }  catch (err){res.status(500).json('feil')}
 })
 
-router.get('/messages', async (req, res) => {
-    try {
-        const messages = await Message.find();
-        res.status(200).json(messages);
-    } catch (err) {
-        res.status(500).json({error: err.message});
-    }
-});
+/*router.get('/', async (req, res) => {
+    try{ 
+    let message = await Message.find()
+    res.status(200).json(message);
+    } catch (err){res.status(500).json(err)}
+})
+*/
 
 module.exports = router;

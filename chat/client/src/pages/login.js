@@ -33,7 +33,7 @@ function Login({ onLogin }) {
     try {
       const salt = await bcrypt.genSalt(saltRounds); // generate a unique salt
       const hashedPassword = await bcrypt.hash(password, salt); // hash the password with the salt
-      const response = await axios.post("http://localhost:5000/user/create", {
+      const response = await axios.post("http://armadillo.pink:25573/user/create", {
         username: username,
         mailadress: email,
         password: hashedPassword,
@@ -44,6 +44,7 @@ function Login({ onLogin }) {
         setError('Username or email already taken');
       }
       if(response.status = 200){
+        sessionStorage.setItem("username", username);
         window.location.href = "/chat";
       }
     } catch (error) {

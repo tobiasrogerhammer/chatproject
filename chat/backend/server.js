@@ -7,7 +7,7 @@ const getUser = require("./getuser");
 
 const app = express();
 const db = "mongodb+srv://tobias:3EZkUJgct3QLHau@cluster0.v5e8lmx.mongodb.net/test";
-const port = 5000;
+const port = 25573;
 
 mongoose.set("strictQuery", false);
 mongoose.connect(db, {});
